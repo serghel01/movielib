@@ -1,163 +1,221 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MovieLib - Demo</title>
-
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MovieLib</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    :root{--accent:#e50914}
-    body{background:#0f0f0f;color:#eee;font-family:Inter,Arial,Helvetica,sans-serif}
-    .navbar{background:#000}
-    .brand{color:var(--accent);font-weight:700}
-    .movie-card{background:#151515;border-radius:8px;overflow:hidden;transition:transform .18s}
-    .movie-card:hover{transform:scale(1.03)}
-    .sidebar{width:240px;background:#0b0b0b;position:fixed;top:0;left:0;height:100vh;padding-top:64px;display:none}
-    .sidebar a{color:#cfcfcf;padding:12px 18px;display:block;text-decoration:none}
-    .sidebar a:hover{background:var(--accent);color:#fff}
-    #adminContent{margin-left:0;transition:margin-left .2s;padding:18px}
-    #adminContent.open{margin-left:240px}
-    .carousel-item img{height:420px;object-fit:cover}
-    .card img{object-fit:cover}
-    footer{opacity:.7;padding:24px 0}
-    .small-muted{color:#bdbdbd}
-    .centered {min-height: 60vh; display:flex; align-items:center; justify-content:center}
+    body {
+      background-color: #121212;
+      color: #fff;
+    }
+    .navbar {
+      background-color: #1f1f1f;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: #1f1f1f;
+      position: fixed;
+      top: 56px;
+      bottom: 0;
+      left: 0;
+      padding: 20px;
+      overflow-y: auto;
+      display: none;
+    }
+    .sidebar.active {
+      display: block;
+    }
+    .content {
+      margin-left: 0;
+      padding: 20px;
+    }
+    .sidebar.active ~ .content {
+      margin-left: 250px;
+    }
+    .card {
+      background-color: #1e1e1e;
+      border: none;
+    }
   </style>
 </head>
 <body>
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-dark fixed-top">
-    <div class="container-fluid">
-      <a class="navbar-brand brand" href="#">🎬 MovieLib</a>
-      <div class="d-flex gap-2 align-items-center">
-        <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#loginModal" id="openLoginBtn">Login</button>
-        <button class="btn btn-danger d-none" id="logoutBtn">Logout</button>
-        <button class="btn btn-dark border border-2 text-light d-none" id="openDashboardBtn">Dashboard</button>
-      </div>
-    </div>
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark px-3">
+    <a class="navbar-brand" href="#">🎬 MovieLib</a>
+    <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#loginModal" id="loginBtn">Login</button>
+    <button class="btn btn-outline-danger d-none" id="logoutBtn">Logout</button>
   </nav>
 
-  <!-- SIDEBAR (admin) -->
-  <div class="sidebar" id="sidebar">
-    <a href="#" onclick="showAdminSection('admin_add')">📥 Agregar película</a>
-    <a href="#" onclick="showAdminSection('admin_list')">📋 Listado</a>
-    <a href="#" onclick="showAdminSection('admin_player')">▶️ Reproductor</a>
+  <!-- Sidebar (solo admin) -->
+  <div class="sidebar" id="adminSidebar">
+    <h4>Dashboard Admin</h4>
+    <form id="addMovieForm">
+      <div class="mb-3">
+        <label for="title" class="form-label">Título</label>
+        <input type="text" id="title" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label for="description" class="form-label">Descripción</label>
+        <textarea id="description" class="form-control" required></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="poster" class="form-label">URL del Poster</label>
+        <input type="url" id="poster" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label for="video" class="form-label">URL del Video</label>
+        <input type="url" id="video" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-success w-100">Agregar Película</button>
+    </form>
   </div>
 
-  <!-- HERO CARRUSEL -->
-  <div class="container mt-5 pt-4">
-    <div id="heroCarousel" class="carousel slide mb-4">
-      <div class="carousel-inner" id="carouselInner"></div>
-      <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon"></span>
-      </button>
-      <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon"></span>
-      </button>
-    </div>
-
-    <!-- GRID PELÍCULAS -->
-    <div id="publicGridContainer">
-      <div class="row" id="publicGrid"></div>
-    </div>
-
-    <div id="emptyNotice" class="centered d-none">
-      <div class="text-center">
-        <h3>No hay películas aún</h3>
-        <p class="small-muted">Inicia sesión como admin y sube la primera película.</p>
+  <!-- Contenido principal -->
+  <div class="content">
+    <div class="container mt-4">
+      <h2 class="mb-4">Películas</h2>
+      <div class="row" id="moviesContainer">
+        <!-- Aquí se muestran las películas -->
       </div>
     </div>
   </div>
 
-  <!-- ADMIN CONTENT -->
-  <div id="adminContent" class="container-fluid">
-    <div id="admin_add" class="admin-section d-none">
-      <h3 class="mb-3">Agregar película</h3>
-      <form id="formAdd">
-        <div class="mb-2"><input id="fldTitle" class="form-control" placeholder="Título" required></div>
-        <div class="mb-2"><textarea id="fldDesc" class="form-control" placeholder="Descripción"></textarea></div>
-        <div class="mb-2"><label class="form-label small-muted">Poster (imagen)</label><input id="fldPoster" type="file" accept="image/*" class="form-control" required></div>
-        <div class="mb-2"><label class="form-label small-muted">Video (mp4 recomendado)</label><input id="fldVideo" type="file" accept="video/*" class="form-control" required></div>
-        <div class="mb-2"><div class="progress"><div id="uploadProgress" class="progress-bar bg-danger" role="progressbar" style="width:0%">0%</div></div></div>
-        <div class="mb-2"><button id="btnUpload" class="btn btn-danger">Subir película</button></div>
-      </form>
-    </div>
-
-    <div id="admin_list" class="admin-section d-none">
-      <h3 class="mb-3">Listado de películas</h3>
-      <div id="adminList"></div>
-    </div>
-
-    <div id="admin_player" class="admin-section d-none">
-      <h3 class="mb-3">Reproductor admin (preview)</h3>
-      <video id="adminPreview" controls class="w-100" style="background:#000"></video>
-    </div>
-  </div>
-
-  <!-- MODAL Reproductor público -->
-  <div class="modal fade" id="modalPlayer" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content bg-dark">
-        <div class="modal-header border-0">
-          <h5 id="modalTitle" class="modal-title"></h5>
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content bg-dark text-white">
+        <div class="modal-header">
+          <h5 class="modal-title">Iniciar Sesión</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <video id="publicPlayer" class="w-100" controls style="background:#000"></video>
+          <form id="loginForm">
+            <div class="mb-3">
+              <label for="email" class="form-label">Correo</label>
+              <input type="email" id="email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Contraseña</label>
+              <input type="password" id="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+          </form>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL LOGIN -->
-  <div class="modal fade" id="loginModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content bg-dark text-light">
-        <div class="modal-header border-0"><h5 class="modal-title">Iniciar sesión</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body">
-          <input id="loginEmail" type="email" class="form-control mb-2" placeholder="Correo">
-          <input id="loginPass" type="password" class="form-control mb-2" placeholder="Contraseña">
-        </div>
-        <div class="modal-footer"><button id="btnLogin" class="btn btn-danger w-100">Ingresar</button></div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="text-center text-muted mt-4">MovieLib — demo</footer>
-
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+  <!-- Firebase + Scripts -->
   <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, serverTimestamp, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-  import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
+    // Importar Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-  // ✅ Configuración corregida
-  const firebaseConfig = {
-    apiKey: "AIzaSyAximGEWo7btApeke9jSLFJ5mxljKCkvRk",
-    authDomain: "movielib-7ccdc.firebaseapp.com",
-    projectId: "movielib-7ccdc",
-    storageBucket: "movielib-7ccdc.appspot.com",
-    messagingSenderId: "177203821691",
-    appId: "1:177203821691:web:e9b699f7b11e1ffe6876de",
-    measurementId: "G-YZCMVNW6S4"
-  };
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAximGEWo7btApeke9jSLFJ5mxljKCkvRk",
+      authDomain: "movielib-7ccdc.firebaseapp.com",
+      projectId: "movielib-7ccdc",
+      storageBucket: "movielib-7ccdc.firebasestorage.app",
+      messagingSenderId: "177203821691",
+      appId: "1:177203821691:web:e9b699f7b11e1ffe6876de",
+      measurementId: "G-YZCMVNW6S4"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  // UID admin
-  const adminUID = "zmfr5MKrcPWacHaEB7p3obJ7Dcm2";
+    const adminUID = "g8pE4HblmJMI5cXwB4ksKCeyWIY2";
 
-  // --- el resto del código sigue igual ---
-  // (todo el manejo de auth, subida de archivos, listado, carrusel, etc.)
+    const loginForm = document.getElementById("loginForm");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const loginBtn = document.getElementById("loginBtn");
+    const adminSidebar = document.getElementById("adminSidebar");
+    const moviesContainer = document.getElementById("moviesContainer");
+    const addMovieForm = document.getElementById("addMovieForm");
+
+    // Login
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        const modal = bootstrap.Modal.getInstance(document.getElementById("loginModal"));
+        modal.hide();
+      } catch (error) {
+        alert("Error: " + error.message);
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    // Estado de autenticación
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loginBtn.classList.add("d-none");
+        logoutBtn.classList.remove("d-none");
+        if (user.uid === adminUID) {
+          adminSidebar.classList.add("active");
+        } else {
+          adminSidebar.classList.remove("active");
+        }
+      } else {
+        loginBtn.classList.remove("d-none");
+        logoutBtn.classList.add("d-none");
+        adminSidebar.classList.remove("active");
+      }
+    });
+
+    // Agregar película
+    addMovieForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      const poster = document.getElementById("poster").value;
+      const video = document.getElementById("video").value;
+
+      try {
+        await addDoc(collection(db, "movies"), { title, description, poster, video });
+        addMovieForm.reset();
+      } catch (error) {
+        alert("Error al agregar película: " + error.message);
+      }
+    });
+
+    // Mostrar películas en tiempo real
+    onSnapshot(collection(db, "movies"), (snapshot) => {
+      moviesContainer.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const movie = doc.data();
+        const col = document.createElement("div");
+        col.className = "col-md-4 mb-4";
+        col.innerHTML = `
+          <div class="card h-100">
+            <img src="${movie.poster}" class="card-img-top" alt="${movie.title}">
+            <div class="card-body">
+              <h5 class="card-title">${movie.title}</h5>
+              <p class="card-text">${movie.description}</p>
+              <video controls width="100%">
+                <source src="${movie.video}" type="video/mp4">
+                Tu navegador no soporta el video.
+              </video>
+            </div>
+          </div>
+        `;
+        moviesContainer.appendChild(col);
+      });
+    });
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
