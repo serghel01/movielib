@@ -109,12 +109,11 @@
 
   <!-- Firebase + Scripts -->
   <script type="module">
-    // Importar Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-    // Configuración de Firebase
+    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAximGEWo7btApeke9jSLFJ5mxljKCkvRk",
       authDomain: "movielib-7ccdc.firebaseapp.com",
@@ -129,6 +128,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // 👉 Nuevo UID de admin
     const adminUID = "g8pE4HblmJMI5cXwB4ksKCeyWIY2";
 
     const loginForm = document.getElementById("loginForm");
@@ -157,7 +157,7 @@
       await signOut(auth);
     });
 
-    // Estado de autenticación
+    // Estado de sesión
     onAuthStateChanged(auth, (user) => {
       if (user) {
         loginBtn.classList.add("d-none");
@@ -218,4 +218,3 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
